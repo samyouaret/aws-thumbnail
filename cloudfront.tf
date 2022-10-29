@@ -1,3 +1,35 @@
+data "aws_cloudfront_cache_policy" "CachingOptimized" {
+  name = "Managed-CachingOptimized"
+}
+
+resource "aws_cloudfront_cache_policy" "thumnail_generator_cache_policy" {
+  name                     = "thumnail_generator_cache_policy"
+  min_ttl                  = 1
+  default_ttl              = 1
+  max_ttl                  = 1
+  parameters_in_cache_key_and_forwarded_to_origin {
+   cookies_config {
+      cookie_behavior = "none"
+      cookies {
+        items = []
+      }
+    }
+    headers_config {
+      header_behavior = "none"
+      headers {
+        items = []
+      }
+    }
+    query_strings_config {
+      query_string_behavior = "whitelist"
+      query_strings {
+        items = ["w", "h"]
+      }
+    }
+  }
+
+}
+
 resource "aws_cloudfront_origin_request_policy" "forward_resize_params" {
   name    = "forward_resize_params"
   comment = "forward resize params to origin"
@@ -17,10 +49,6 @@ resource "aws_cloudfront_origin_request_policy" "forward_resize_params" {
   }
 }
 
-data "aws_cloudfront_cache_policy" "CachingOptimized" {
-  name = "Managed-CachingOptimized"
-}
-
 resource "aws_cloudfront_distribution" "lambda_distribution" {
   origin {
     domain_name = "${aws_lambda_function_url.lambda_url.url_id}.lambda-url.us-east-1.on.aws"
@@ -36,29 +64,24 @@ resource "aws_cloudfront_distribution" "lambda_distribution" {
   }
 
   depends_on = [
+    aws_cloudfront_cache_policy.thumnail_generator_cache_policy,
     aws_cloudfront_origin_request_policy.forward_resize_params,
-    aws_lambda_function_url.lambda_url
   ]
 
-  enabled = true
-
+  enabled         = true
   default_cache_behavior {
     allowed_methods          = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods           = ["GET", "HEAD"]
     target_origin_id         = "${aws_lambda_function_url.lambda_url.url_id}.lambda-url.us-east-1.on.aws"
     viewer_protocol_policy   = "allow-all"
-    min_ttl                  = 0
-    default_ttl              = 3600
-    max_ttl                  = 86400
-    cache_policy_id          = data.aws_cloudfront_cache_policy.CachingOptimized.id
+    cache_policy_id = aws_cloudfront_cache_policy.thumnail_generator_cache_policy.id
     origin_request_policy_id = aws_cloudfront_origin_request_policy.forward_resize_params.id
   }
 
   restrictions {
     geo_restriction {
       restriction_type = "none"
-      # locations        = ["US", "CA", "GB", "DE"]
-      locations = []
+      locations        = []
     }
   }
 

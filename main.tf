@@ -11,43 +11,28 @@ provider "aws" {
   secret_key = var.aws_secret_key
 }
 
-# create role for lambda
+# create role for lambda so it can assume role
 resource "aws_iam_role" "lambda_role" {
-
-  name = "Spacelift_Test_Lambda_Function_Role"
-
-  assume_role_policy = <<EOF
+  name = "th_gen_lambda_function_Role"
+  assume_role_policy = <<POLICY
 {
-
  "Version": "2012-10-17",
-
  "Statement": [
-
    {
-
      "Action": "sts:AssumeRole",
-
      "Principal": {
-
        "Service": "lambda.amazonaws.com"
-
      },
-
      "Effect": "Allow",
-
-     "Sid": ""
-
+     "Sid": "AllowLamdaToAssumeRole"
    }
-
  ]
+}
+POLICY
 
 }
 
-EOF
-
-}
 resource "aws_iam_policy" "iam_policy_for_lambda" {
-
   name        = "aws_iam_policy_for_terraform_aws_lambda_role"
   path        = "/"
   description = "AWS IAM Policy for managing aws lambda role"
@@ -56,6 +41,7 @@ resource "aws_iam_policy" "iam_policy_for_lambda" {
  "Version": "2012-10-17",
  "Statement": [
    {
+      "Sid": "BasicLambdaLogsPolicy",
      "Action": [
        "logs:CreateLogGroup",
        "logs:CreateLogStream",
@@ -63,7 +49,17 @@ resource "aws_iam_policy" "iam_policy_for_lambda" {
      ],
      "Resource": "arn:aws:logs:*:*:*",
      "Effect": "Allow"
-   }
+   },
+    {
+      "Sid": "AllowS3Read",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Effect": "Allow",
+      "Resource": [
+        "arn:aws:s3:::samyouaret-thumbnail-pictures/*"
+      ]
+    }
  ]
 }
 EOF
@@ -81,6 +77,11 @@ resource "aws_lambda_function" "lambda_generator" {
   role             = aws_iam_role.lambda_role.arn
   handler          = "index.handler"
   runtime          = "nodejs16.x"
+  environment {
+     variables = {
+      BUCKET = "samyouaret-thumbnail-pictures"
+    }
+  }
 }
 
 resource "aws_lambda_function_url" "lambda_url" {
