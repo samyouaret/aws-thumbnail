@@ -2,7 +2,7 @@
 
 ## Exporting AWS credentials
 
-export TF_VAR_aws_secret_key=AWS_SECRET_KEY TF_VAR_aws_access_key=AWS_ACCESS_KEY
+    export TF_VAR_aws_secret_key=AWS_SECRET_KEY TF_VAR_aws_access_key=AWS_ACCESS_KEY
 
 ## Packing lambda in a zip file
 
