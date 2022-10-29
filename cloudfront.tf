@@ -4,9 +4,9 @@ data "aws_cloudfront_cache_policy" "CachingOptimized" {
 
 resource "aws_cloudfront_cache_policy" "thumnail_generator_cache_policy" {
   name                     = "thumnail_generator_cache_policy"
-  min_ttl                  = 1
-  default_ttl              = 1
-  max_ttl                  = 1
+  min_ttl                  = 60
+  default_ttl              = 60
+  max_ttl                  = 60
   parameters_in_cache_key_and_forwarded_to_origin {
    cookies_config {
       cookie_behavior = "none"
